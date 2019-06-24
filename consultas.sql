@@ -30,46 +30,25 @@ WHERE a.qnt_lavadeira = (SELECT MAX(qnt_lavadeira)
                                                                                                      
                                                                                                      
 
-                                                                                                     
---Questao 15
---LEMBRAR DE CORRIGIR OS VALORES NA STRINGS
+                                                                                                    
+                                                                                                    
 
+--Questao 15 - Alternativa que finalmente funciona:
 CREATE OR REPLACE TRIGGER trCheckReserva 
 AFTER INSERT ON Reserva
 FOR EACH ROW
+
+DECLARE 
+    found INT := 0;
 BEGIN
-    IF :new.NUMERO_QUARTO NOT IN (SELECT q.NUMERO
-                                FROM Quarto q
-                                WHERE q.TIPO = 'EUR' and q.VISTA = 'Euro') THEN 
-        RAISE_APPLICATION_ERROR(-20000, 'So pode reservar quarto tipo simples e vista lateral');                          
-    END IF;
-END;
-
-
-
---Questao 15
--- Versao alternativa
-
-CREATE OR REPLACE TRIGGER trCheckReserva 
-AFTER INSERT ON Reserva
-FOR EACH ROW
-DECLARE
-    CURSOR qto_cursor IS SELECT q.NUMERO
-                         FROM Quarto q
-                         WHERE q.TIPO LIKE '%EUR%' and q.VISTA LIKE '%Euro%';
-    num_qto_simples_lateral qto_cursor%ROWTYPE;
-BEGIN
-    OPEN qto_cursor;
+    FOR qto IN (SELECT * FROM Quarto WHERE (TIPO LIKE '%EUR%' and VISTA LIKE '%Euro%'))
     LOOP
-        FECTH qto_cursor INTO num_qto_simples_lateral;
-        EXIT WHEN qto_cursor%NOT_FOUND;
-        IF(num_qto_simples_lateral LIKE :NEW.NUMERO_QUARTO) THEN
-            EXIT;
+        IF (:NEW.numero_quarto LIKE qto.numero) THEN 
+            found := 1;
         END IF;
     END LOOP;
-    IF(qto_cursor%NOT_FOUND)
+    IF (FOUND = 0) THEN
         RAISE_APPLICATION_ERROR(-20000, 'So pode reservar quarto tipo simples e vista lateral');
     END IF;
-    CLOSE qto_cursor;
 END;
-                                                                                                     
+                                                                                                    
