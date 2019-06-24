@@ -24,3 +24,52 @@ SELECT a.cpf
 FROM auxiliar a
 WHERE a.qnt_lavadeira = (SELECT MAX(qnt_lavadeira)
                         FROM auxiliar)
+                                                                                                     
+                                                                                                     
+ 
+                                                                                                     
+                                                                                                     
+
+                                                                                                     
+--Questao 15
+--LEMBRAR DE CORRIGIR OS VALORES NA STRINGS
+
+CREATE OR REPLACE TRIGGER trCheckReserva 
+AFTER INSERT ON Reserva
+FOR EACH ROW
+BEGIN
+    IF :new.NUMERO_QUARTO NOT IN (SELECT q.NUMERO
+                                FROM Quarto q
+                                WHERE q.TIPO = 'EUR' and q.VISTA = 'Euro') THEN 
+        RAISE_APPLICATION_ERROR(-20000, 'So pode reservar quarto tipo simples e vista lateral');                          
+    END IF;
+END;
+
+
+
+--Questao 15
+-- Versao alternativa
+
+CREATE OR REPLACE TRIGGER trCheckReserva 
+AFTER INSERT ON Reserva
+FOR EACH ROW
+DECLARE
+    CURSOR qto_cursor IS SELECT q.NUMERO
+                         FROM Quarto q
+                         WHERE q.TIPO LIKE '%EUR%' and q.VISTA LIKE '%Euro%';
+    num_qto_simples_lateral qto_cursor%ROWTYPE;
+BEGIN
+    OPEN qto_cursor;
+    LOOP
+        FECTH qto_cursor INTO num_qto_simples_lateral;
+        EXIT WHEN qto_cursor%NOT_FOUND;
+        IF(num_qto_simples_lateral LIKE :NEW.NUMERO_QUARTO) THEN
+            EXIT;
+        END IF;
+    END LOOP;
+    IF(qto_cursor%NOT_FOUND)
+        RAISE_APPLICATION_ERROR(-20000, 'So pode reservar quarto tipo simples e vista lateral');
+    END IF;
+    CLOSE qto_cursor;
+END;
+                                                                                                     
